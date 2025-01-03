@@ -1,0 +1,10 @@
+type: telemetrygen
+
+status:
+  class: receiver
+  stability:
+    development: [metrics]
+  distributions: []
+  codeowners:
+    active: [rogercoll]
+

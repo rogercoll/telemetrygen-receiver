@@ -2,6 +2,7 @@ extensions:
 
 receivers:
   telemetrygen:
+    throughput: 1048576 # 1MB (1024*1024)
 
 processors:
 
