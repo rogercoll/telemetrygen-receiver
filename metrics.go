@@ -21,11 +21,16 @@ import (
 //go:embed demo-data/metrics.json
 var demoMetrics []byte
 
+type receiverMetrics struct {
+	metrics  pmetric.Metrics
+	jsonSize int
+}
+
 type metricsGenerator struct {
 	cfg    *Config
 	logger *zap.Logger
 
-	sampleMetrics   []pmetric.Metrics
+	sampleMetrics   []receiverMetrics
 	lastSampleIndex int
 	consumer        consumer.Metrics
 
@@ -43,18 +48,22 @@ func createMetricsReceiver(
 		cfg:             genConfig,
 		logger:          set.Logger,
 		consumer:        consumer,
-		sampleMetrics:   make([]pmetric.Metrics, 0),
+		sampleMetrics:   make([]receiverMetrics, 0),
 		lastSampleIndex: 0,
 	}
 
 	parser := pmetric.JSONUnmarshaler{}
 	scanner := bufio.NewScanner(bytes.NewReader(demoMetrics))
 	for scanner.Scan() {
-		lineMetrics, err := parser.UnmarshalMetrics(scanner.Bytes())
+		metricBytes := scanner.Bytes()
+		lineMetrics, err := parser.UnmarshalMetrics(metricBytes)
 		if err != nil {
 			return nil, err
 		}
-		recv.sampleMetrics = append(recv.sampleMetrics, lineMetrics)
+		recv.sampleMetrics = append(recv.sampleMetrics, receiverMetrics{
+			metrics:  lineMetrics,
+			jsonSize: len(metricBytes),
+		})
 	}
 
 	return &recv, nil
@@ -66,7 +75,6 @@ func (ar *metricsGenerator) Start(ctx context.Context, _ component.Host) error {
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
-		parser := pmetric.JSONMarshaler{}
 		var throughput, totalSeconds, totalSendBytes float64
 		for {
 			select {
@@ -77,7 +85,7 @@ func (ar *metricsGenerator) Start(ctx context.Context, _ component.Host) error {
 				totalSeconds += 1
 				throughput = totalSendBytes / totalSeconds
 				for throughput < ar.cfg.Throughput {
-					nMetrics, err := ar.nextMetrics()
+					nMetrics, nSize, err := ar.nextMetrics()
 					if err != nil {
 						ar.logger.Error(err.Error())
 						continue
@@ -88,13 +96,7 @@ func (ar *metricsGenerator) Start(ctx context.Context, _ component.Host) error {
 						continue
 					}
 
-					jsonMetrics, err := parser.MarshalMetrics(nMetrics)
-					if err != nil {
-						ar.logger.Error(err.Error())
-						continue
-					}
-
-					totalSendBytes += float64(len(jsonMetrics))
+					totalSendBytes += float64(nSize)
 					throughput = totalSendBytes / totalSeconds
 				}
 				ar.logger.Info("Consumed metrics", zap.Float64("bytes", totalSendBytes))
@@ -111,12 +113,14 @@ func (ar *metricsGenerator) Shutdown(context.Context) error {
 	return nil
 }
 
-func (ar *metricsGenerator) nextMetrics() (pmetric.Metrics, error) {
+func (ar *metricsGenerator) nextMetrics() (pmetric.Metrics, int, error) {
 	now := pcommon.NewTimestampFromTime(time.Now())
 
 	nextMetrics := pmetric.NewMetrics()
 
-	ar.sampleMetrics[ar.lastSampleIndex].CopyTo(nextMetrics)
+	ar.sampleMetrics[ar.lastSampleIndex].metrics.CopyTo(nextMetrics)
+	sampledSize := ar.sampleMetrics[ar.lastSampleIndex].jsonSize
+
 	rm := nextMetrics.ResourceMetrics()
 	for i := 0; i < rm.Len(); i++ {
 		for j := 0; j < rm.At(i).ScopeMetrics().Len(); j++ {
@@ -161,5 +165,5 @@ func (ar *metricsGenerator) nextMetrics() (pmetric.Metrics, error) {
 
 	ar.lastSampleIndex = (ar.lastSampleIndex + 1) % len(ar.sampleMetrics)
 
-	return nextMetrics, nil
+	return nextMetrics, sampledSize, nil
 }
