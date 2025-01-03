@@ -22,3 +22,7 @@ service:
       receivers: [telemetrygen]
       processors:
       exporters: [debug]
+    traces:
+      receivers: [telemetrygen]
+      processors:
+      exporters: [debug]

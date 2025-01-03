@@ -11,7 +11,7 @@ import (
 // CreateDefaultConfig creates the default configuration for the Scraper.
 func createDefaultReceiverConfig() *Config {
 	return &Config{
-		// 1MB
+		// 1 kB
 		Throughput: 1024,
 	}
 }
@@ -23,6 +23,7 @@ func NewFactory() receiver.Factory {
 			return createDefaultReceiverConfig()
 		},
 		receiver.WithMetrics(createMetricsReceiver, component.StabilityLevelDevelopment),
+		receiver.WithTraces(createTracesReceiver, component.StabilityLevelDevelopment),
 		receiver.WithLogs(createLogsReceiver, component.StabilityLevelDevelopment),
 	)
 }
