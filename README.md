@@ -15,7 +15,7 @@ The OpenTelemetry Telemetry Generator Receiver is a specialized OpenTelemetry re
 
 ## How Telemetry Is Generated
 
-The receiver utilizes pre-captured telemetry data from a typical OpenTelemetry Demo execution, which represents a diverse set of application scenarios and workloads. When generating telemetry, the receiver uses this base data, dynamically adjusting timestamps to match the current time. This approach ensures the generated telemetry retains the structure and content of authentic OpenTelemetry Demo data while appearing as though it were generated in real-time.
+The receiver utilizes pre-captured telemetry data from a typical OpenTelemetry Demo execution, which represents a diverse set of application scenarios and workloads. When generating telemetry, the receiver uses this base data, dynamically adjusting timestamps to match the current time. This approach ensures the generated telemetry retains the structure and content of authentic OpenTelemetry Demo data while appearing as though it were generated in real-time. The pre-captured telemetry is embedded in the receiver and can be found in [demo-data](./demo-data/).
 
 ## Sample configuration
 
