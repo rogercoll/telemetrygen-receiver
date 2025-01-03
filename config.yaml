@@ -1,0 +1,24 @@
+extensions:
+
+receivers:
+  telemetrygen:
+
+processors:
+
+exporters:
+  debug:
+    verbosity: detailed
+
+service:
+  telemetry:
+    logs:
+      level: debug
+  pipelines:
+    metrics:
+      receivers: [telemetrygen]
+      processors:
+      exporters: [debug]
+    logs:
+      receivers: [telemetrygen]
+      processors:
+      exporters: [debug]
