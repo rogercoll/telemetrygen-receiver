@@ -11,8 +11,18 @@ import (
 // CreateDefaultConfig creates the default configuration for the Scraper.
 func createDefaultReceiverConfig() *Config {
 	return &Config{
-		// 1 kB
-		Throughput: 1024,
+		Metrics: MetricsConfig{
+			// 1 kB
+			Throughput: 1024,
+		},
+		Logs: LogsConfig{
+			// 1 kB
+			Throughput: 1024,
+		},
+		Traces: TracesConfig{
+			// 1 kB
+			Throughput: 1024,
+		},
 	}
 }
 

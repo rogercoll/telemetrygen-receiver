@@ -22,7 +22,14 @@ The receiver utilizes pre-captured telemetry data from a typical OpenTelemetry D
 ```yaml
 receivers:
   telemetrygen:
-    throughput: 1048576 # 1MB (1024*1024)
+    metrics:
+      throughput: 1048576 # 1MB/s (1024*1024)
+    logs:
+      throughput: 1048576 # 1MB/s (1024*1024)
+    traces:
+      throughput: 1048576 # 1MB/s (1024*1024)
+      services:
+        randomized_name_count: 200
 
 processors:
 

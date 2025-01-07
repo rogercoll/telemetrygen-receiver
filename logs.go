@@ -78,13 +78,12 @@ func (ar *logsGenerator) Start(ctx context.Context, _ component.Host) error {
 		var throughput, totalSeconds, totalSendBytes float64
 		for {
 			select {
-
 			case <-startCtx.Done():
-				break
+				return
 			case <-ticker.C:
 				totalSeconds += 1
 				throughput = totalSendBytes / totalSeconds
-				for throughput < ar.cfg.Throughput {
+				for throughput < float64(ar.cfg.Logs.Throughput) {
 					nMetrics, nSize, err := ar.nextLogs()
 					if err != nil {
 						ar.logger.Error(err.Error())
