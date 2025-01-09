@@ -10,6 +10,7 @@ import (
 	crand "crypto/rand"
 	_ "embed"
 	"math/rand"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -60,7 +61,17 @@ func createTracesReceiver(
 	}
 
 	parser := ptrace.JSONUnmarshaler{}
-	scanner := bufio.NewScanner(bytes.NewReader(demoTraces))
+	var err error
+	sampleTraces := demoTraces
+
+	if genConfig.Traces.JsonFile != "" {
+		sampleTraces, err = os.ReadFile(string(genConfig.Traces.JsonFile))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	scanner := bufio.NewScanner(bytes.NewReader(sampleTraces))
 	for scanner.Scan() {
 		traceBytes := scanner.Bytes()
 		lineTraces, err := parser.UnmarshalTraces(traceBytes)
@@ -155,7 +166,7 @@ func (ar *tracesGenerator) nextTraces(serviceNames []string) (ptrace.Traces, int
 				sspan := rm.At(i).ScopeSpans().At(j).Spans().At(k)
 				now := time.Now()
 				// Generate a random duration between 0 and 3 seconds
-				sspan.SetStartTimestamp(pcommon.NewTimestampFromTime(now.Add(-time.Duration(rand.Intn(3000)) * time.Millisecond)))
+				sspan.SetStartTimestamp(pcommon.NewTimestampFromTime(now.Add(-time.Duration(rand.Intn(int(ar.cfg.Traces.MaxSpansInterval.Milliseconds()))) * time.Millisecond)))
 				sspan.SetEndTimestamp(pcommon.NewTimestampFromTime(now))
 
 			}

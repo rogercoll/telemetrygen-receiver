@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -53,7 +54,17 @@ func createMetricsReceiver(
 	}
 
 	parser := pmetric.JSONUnmarshaler{}
-	scanner := bufio.NewScanner(bytes.NewReader(demoMetrics))
+	var err error
+	sampleMetrics := demoMetrics
+
+	if genConfig.Metrics.JsonFile != "" {
+		sampleMetrics, err = os.ReadFile(string(genConfig.Metrics.JsonFile))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	scanner := bufio.NewScanner(bytes.NewReader(sampleMetrics))
 	for scanner.Scan() {
 		metricBytes := scanner.Bytes()
 		lineMetrics, err := parser.UnmarshalMetrics(metricBytes)

@@ -21,7 +21,8 @@ func createDefaultReceiverConfig() *Config {
 		},
 		Traces: TracesConfig{
 			// 1 kB
-			Throughput: 1024,
+			Throughput:       1024,
+			MaxSpansInterval: 3000,
 		},
 	}
 }

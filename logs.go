@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/collector/component"
@@ -53,7 +54,17 @@ func createLogsReceiver(
 	}
 
 	parser := plog.JSONUnmarshaler{}
-	scanner := bufio.NewScanner(bytes.NewReader(demoLogs))
+	var err error
+	sampleLogs := demoLogs
+
+	if genConfig.Logs.JsonFile != "" {
+		sampleLogs, err = os.ReadFile(string(genConfig.Logs.JsonFile))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	scanner := bufio.NewScanner(bytes.NewReader(sampleLogs))
 	for scanner.Scan() {
 		logBytes := scanner.Bytes()
 		lineLogs, err := parser.UnmarshalLogs(logBytes)
